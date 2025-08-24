@@ -159,6 +159,20 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+// Root route - show home page or redirect to listings
+app.get("/", (req, res) => {
+  if (req.user) {
+    // If user is logged in, redirect to listings
+    res.redirect("/listings");
+  } else {
+    // If no user, show welcome page
+    res.render("home", { 
+      title: "Welcome to TravelStay",
+      user: req.user 
+    });
+  }
+});
+
 // Routes
 app.use("/listings", listingRouter);
 app.use("/listings/:id/reviews", reviewsRouter);

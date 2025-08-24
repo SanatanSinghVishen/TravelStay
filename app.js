@@ -8,14 +8,16 @@ const mongoose = require("mongoose");
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
-const MONGO_URL = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/wanderlust";
 const ExpressError = require("./utils/ExpressError.js");
 const session = require("express-session");
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
-const User = require("./models/user.js"); 
+const User = require("./models/user.js");
+const multer = require("multer");
 
+// Database connection with fallback
+const dburl = process.env.ATLAS_DB || "mongodb://127.0.0.1:27017/travelstay";
 
 const listingRouter = require("./routes/listing.js"); 
 const reviewsRouter = require("./routes/reviews.js");
@@ -24,13 +26,12 @@ const userRouter = require("./routes/user.js");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname,"/public"))); //to serve static files
+app.use(express.static(path.join(__dirname,"/public")));
 app.use(methodOverride("_method"));
 app.engine('ejs', ejsMate);
 
-
 const sessionOptions = {
-  secret: process.env.SECRET ,
+  secret: process.env.SECRET || "fallback-secret-key",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -47,65 +48,105 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
-passport.serializeUser(User.serializeUser()); // storing the user info into the session
-passport.deserializeUser(User.deserializeUser()); // unstoring the user info from the session
-
-
-
+// User middleware with error handling
 app.use((req,res,next)=>{
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
-  res.locals.currUser = req.user;
+  
+  // Safely handle user authentication
+  try {
+    res.locals.currUser = req.user || null;
+  } catch (error) {
+    console.log('User middleware error:', error.message);
+    res.locals.currUser = null;
+  }
+  
   next();
 });
 
-// app.get("/demoUser",async (req,res)=>{
-//   let fakeUser = new User({
-//     email : "student@gmail.com",
-//     username : "delta-student"
-//   });
+// Health check route
+app.get("/health", (req, res) => {
+  res.json({
+    status: "Server is running",
+    timestamp: new Date().toISOString(),
+    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"
+  });
+});
 
-//   let registeredUser = await User.register(fakeUser,"helloworld");
-//   res.send(registeredUser);
-// });
+// Test route
+app.get("/test", (req, res) => {
+  res.send("Server is running! Database status: " + (mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"));
+});
 
-
-// Connect to MongoDB first
+// Connect to MongoDB with fallback
 async function main() {
   try {
-    await mongoose.connect(MONGO_URL);
-    console.log(`Connected to MongoDB at ${MONGO_URL}`);
+    const mongooseOptions = {};
     
-    // Start server only after successful database connection
-    const port = process.env.PORT || 0; // Use 0 to let OS assign a free port
+    // Add TLS options for Atlas connection
+    if (dburl.includes('mongodb+srv://')) {
+      mongooseOptions.tls = true;
+      mongooseOptions.tlsAllowInvalidCertificates = true;
+    }
+    
+    await mongoose.connect(dburl, mongooseOptions);
+    console.log(`✅ Connected to MongoDB at ${dburl}`);
+    
+    // Start server after successful database connection
+    const port = process.env.PORT || 0;
     const server = app.listen(port, () => {
       const actualPort = server.address().port;
-      console.log(`Server is listening to port ${actualPort}`);
+      console.log(`🚀 Server is listening to port ${actualPort}`);
     });
   } catch (error) {
-    console.error("Failed to connect to MongoDB:", error);
-    process.exit(1);
+    console.error("❌ Failed to connect to MongoDB:", error.message);
+    console.log("⚠️  Starting server without database connection...");
+    
+    // Start server even if database fails (for testing)
+    const port = process.env.PORT || 0;
+    const server = app.listen(port, () => {
+      const actualPort = server.address().port;
+      console.log(`🚀 Server is listening to port ${actualPort} (Database connection failed)`);
+    });
   }
 }
+
+// Multer error handling middleware
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    console.error('❌ Multer error:', err);
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      req.flash('error', 'File too large. Please use an image under 10MB.');
+    } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      req.flash('error', 'Unexpected file field. Please check your form.');
+    } else {
+      req.flash('error', 'File upload failed. Please try again.');
+    }
+    return res.redirect('/listings/new');
+  }
+  next(err);
+});
 
 // Define routes
 app.use("/listings", listingRouter);
 app.use("/listings/:id/reviews", reviewsRouter);
 app.use("/", userRouter);
 
-app.all("*", (req, res, next) => { //if user requests a route that does not exist then after tracing all the routes it will come here and display page not found error
+// 404 handler
+app.all("*", (req, res, next) => {
   next(new ExpressError(404, "Page not Found!"));
 });
 
+// Error handler
 app.use((err, req, res, next) => {
   let { statusCode = 500, message = "Something went wrong!" } = err;
   
-  // Log error for debugging
-  console.error(`Error ${statusCode}: ${message}`);
-  console.error(err.stack);
+  console.error(`❌ Error ${statusCode}: ${message}`);
+  if (err.stack) console.error(err.stack);
   
-  // res.status(statusCode).send(message);
   res.status(statusCode).render("error", { err, statusCode, message });
 });
 

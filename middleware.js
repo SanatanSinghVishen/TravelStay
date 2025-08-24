@@ -48,15 +48,21 @@ module.exports.isOwner = async (req, res, next) => {
 
 // Validate listing input with Joi
 module.exports.validateListing = (req, res, next) => {
+  console.log('🔍 Validating listing data...');
+  console.log('Request body:', req.body);
+  
   try {
     const { error } = listingSchema.validate(req.body);
     if (error) {
       const errMsg = error.details.map((el) => el.message).join(", ");
+      console.log('❌ Validation error:', errMsg);
       throw new ExpressError(400, errMsg);
     } else {
+      console.log('✅ Validation passed');
       next();
     }
   } catch (error) {
+    console.log('❌ Validation middleware error:', error.message);
     next(error);
   }
 };

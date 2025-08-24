@@ -1,28 +1,29 @@
-const cloudinary = require('cloudinary');
+const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
+// Configure Cloudinary
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.CLOUD_API_KEY,
     api_secret: process.env.CLOUD_API_SECRET
 });
 
-// Check if required environment variables are set
-if (!process.env.CLOUD_NAME || !process.env.CLOUD_API_KEY || !process.env.CLOUD_API_SECRET) {
-    console.warn('Warning: Cloudinary environment variables are not set. Image uploads may not work.');
-}
+console.log('✅ Cloudinary configured successfully');
 
-const storage = new CloudinaryStorage({ //where the files will be stored
-    cloudinary: cloudinary,
-    params: {
-      folder: 'wanderLust_DEV',
-      allowedFormats: ["png", "jpg", "jpeg"],
-      transformation: [{ width: 500, height: 500, crop: 'limit' }]
-    },
-});
-   
-
-module.exports = {
+// Create Cloudinary storage for multer
+const storage = new CloudinaryStorage({
     cloudinary,
-    storage,
-}
+    params: {
+        folder: "TravelStay_Listings",
+        allowed_formats: ["png", "jpg", "jpeg", "gif", "webp"],
+        public_id: (req, file) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            return file.fieldname + '-' + uniqueSuffix;
+        },
+        // ⚡️ Do not apply heavy transformations on upload, apply them on delivery URL
+    }
+});
+
+console.log('✅ Cloudinary storage configured successfully');
+
+module.exports = { cloudinary, storage };

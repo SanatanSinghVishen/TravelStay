@@ -1,6 +1,6 @@
 # 🌍 TravelStay
 
-TravelStay is a full-stack web application inspired by **Wanderlust (Apna College Project)**.  
+TravelStay is a full-stack web application.
 It allows users to explore, list, and manage travel accommodations with ease.  
 
 The project demonstrates core concepts of **backend + frontend integration**, CRUD operations, authentication, and deployment practices.

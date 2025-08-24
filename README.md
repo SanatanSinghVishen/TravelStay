@@ -169,8 +169,10 @@ This project is licensed under the ISC License.
 
 ## 👨‍💻 Author
 
-**Sanatan Singh Vishen**
+**Sanatan Singh**
+**Sundram Kumar** 
 - GitHub: [@SanatanSinghVishen](https://github.com/SanatanSinghVishen)
+- GitHub: [@Sundram556](https://github.com/sundram556)
 
 ## 🙏 Acknowledgments
 

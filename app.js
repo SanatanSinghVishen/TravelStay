@@ -10,14 +10,19 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
 const multer = require("multer");
 
+
 // Database connection with fallback
 const dburl = process.env.ATLAS_DB || "mongodb://127.0.0.1:27017/travelstay";
+
+// Import MongoStore for production session storage
+const MongoStore = require('connect-mongo');
 
 const listingRouter = require("./routes/listing.js"); 
 const reviewsRouter = require("./routes/reviews.js");
@@ -34,14 +39,28 @@ const sessionOptions = {
   secret: process.env.SECRET || "fallback-secret-key",
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: dburl,
+    touchAfter: 24 * 3600, // time period in seconds
+    crypto: {
+      secret: process.env.SECRET || "fallback-secret-key"
+    },
+    collectionName: 'sessions', // collection name for sessions
+    ttl: 7 * 24 * 60 * 60, // session TTL in seconds (7 days)
+    autoRemove: 'native' // automatically remove expired sessions
+  }),
   cookie: {
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production"
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax'
   }
 };
 
+// Configure session with MongoDB storage
 app.use(session(sessionOptions));
+console.log('✅ Session configured with MongoDB storage');
+
 app.use(flash());
 
 app.use(passport.initialize());
@@ -81,6 +100,16 @@ app.get("/test", (req, res) => {
   res.send("Server is running! Database status: " + (mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"));
 });
 
+// Session test route
+app.get("/session-test", (req, res) => {
+  res.json({
+    sessionID: req.sessionID,
+    user: req.user ? req.user.username : 'Not logged in',
+    sessionStore: req.sessionStore ? 'MongoDB' : 'Memory',
+    databaseStatus: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"
+  });
+});
+
 // Connect to MongoDB with fallback
 async function main() {
   try {
@@ -96,20 +125,21 @@ async function main() {
     console.log(`✅ Connected to MongoDB at ${dburl}`);
     
     // Start server after successful database connection
-    const port = process.env.PORT || 0;
-    const server = app.listen(port, () => {
-      const actualPort = server.address().port;
-      console.log(`🚀 Server is listening to port ${actualPort}`);
+    const port = process.env.PORT || 3000;
+    const server = app.listen(port, '0.0.0.0', () => {
+      console.log(`🚀 Server is listening to port ${port}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📊 Database: Connected`);
     });
   } catch (error) {
     console.error("❌ Failed to connect to MongoDB:", error.message);
     console.log("⚠️  Starting server without database connection...");
     
     // Start server even if database fails (for testing)
-    const port = process.env.PORT || 0;
-    const server = app.listen(port, () => {
-      const actualPort = server.address().port;
-      console.log(`🚀 Server is listening to port ${actualPort} (Database connection failed)`);
+    const port = process.env.PORT || 3000;
+    const server = app.listen(port, '0.0.0.0', () => {
+      console.log(`🚀 Server is listening to port ${port} (Database connection failed)`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   }
 }

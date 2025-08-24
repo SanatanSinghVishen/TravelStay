@@ -21,9 +21,6 @@ const multer = require("multer");
 // Database connection with fallback
 const dburl = process.env.ATLAS_DB || "mongodb://127.0.0.1:27017/travelstay";
 
-// Import MongoStore for production session storage
-const MongoStore = require('connect-mongo');
-
 const listingRouter = require("./routes/listing.js"); 
 const reviewsRouter = require("./routes/reviews.js");
 const userRouter = require("./routes/user.js");

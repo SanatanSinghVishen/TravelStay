@@ -15,7 +15,7 @@ module.exports.signup = async (req, res, next) => {
 
     req.login(registeredUser, (err) => {
       if (err) return next(err);
-      req.flash("success", "Welcome to WanderLust!!");
+      req.flash("success", "Welcome to TravelStay!!");
       res.redirect("/listings");
     });
   } catch (e) {
@@ -36,7 +36,7 @@ module.exports.renderLoginForm = (req, res) => {
 
 // LOGIN — after successful Passport authentication
 module.exports.login = (req, res) => {
-  req.flash("success", "Welcome back to WanderLust! You are logged in!");
+      req.flash("success", "Welcome back to TravelStay! You are logged in!");
   const redirectUrl = res.locals.redirectUrl || "/listings";
   res.redirect(redirectUrl);
 };

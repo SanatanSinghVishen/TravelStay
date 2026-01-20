@@ -2,22 +2,18 @@ const express = require("express");
 const router = express.Router();
 const passport = require("passport");
 const users = require("../controllers/users");
-const { saveRedirectUrl } = require("../middleware");
 
-// SIGNUP routes
-router.route("/signup")
-  .get(users.renderSignupForm)
-  .post(users.signup);
+// SIGNUP route (Only POST)
+router.post("/signup", users.signup);
 
-// LOGIN routes
-router.route("/login")
-  .get(users.renderLoginForm)
-  .post(saveRedirectUrl, passport.authenticate("local", {
-      failureFlash: true,
-      failureRedirect: "/login"
-  }), users.login);
+// LOGIN route (Only POST)
+// Use session: false for JWT
+router.post("/login",
+  passport.authenticate("local", { session: false, failWithError: true }),
+  users.login
+);
 
 // LOGOUT
-router.get("/logout", users.logout);
+router.post("/logout", users.logout); // Logout is typically a POST (state change) or client-side only
 
 module.exports = router;

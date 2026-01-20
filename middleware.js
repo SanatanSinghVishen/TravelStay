@@ -2,105 +2,79 @@ const Listing = require("./models/listing");
 const Review = require("./models/review");
 const { listingSchema, reviewSchema } = require("./schema.js");
 const ExpressError = require("./utils/ExpressError.js");
+const jwt = require("jsonwebtoken");
 
-// Ensure user is logged in
-module.exports.isLoggedIn = (req, res, next) => {
-  if (!req.isAuthenticated()) {
-    req.session.redirectUrl = req.originalUrl;
-    req.flash("error", "You must be logged in to create a listing.");
-    return res.redirect("/login");
-  }
-  next();
-};
+// Middleware to verify JWT Token
+module.exports.verifyToken = (req, res, next) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
 
-// Save redirect URL (after login)
-module.exports.saveRedirectUrl = (req, res, next) => {
-  if (req.session.redirectUrl) {
-    res.locals.redirectUrl = req.session.redirectUrl;
-  }
-  next();
-};
-
-// Ensure the logged-in user is the owner of the listing
-module.exports.isOwner = async (req, res, next) => {
-  let { id } = req.params;
-  
-  if (!res.locals.currUser) {
-    req.flash("error", "You must be logged in to perform this action!");
-    return res.redirect("/login");
-  }
-  
-  let listing = await Listing.findById(id);
-
-  if (!listing) {
-    req.flash("error", "Listing not found!");
-    return res.redirect("/listings");
+  if (!token) {
+    return res.status(401).json({ error: "Access denied. No token provided." });
   }
 
-  // listing.owner is an ObjectId → compare with currUser._id
-  if (!listing.owner.equals(res.locals.currUser._id)) {
-    req.flash("error", "You don't have permission to edit this listing!");
-    return res.redirect(`/listings/${id}`);
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET || "fallback-secret-key");
+    req.user = decoded; // Attach user payload to request
+    next();
+  } catch (ex) {
+    res.status(400).json({ error: "Invalid token." });
   }
-
-  next();
 };
 
 // Validate listing input with Joi
 module.exports.validateListing = (req, res, next) => {
-  console.log('🔍 Validating listing data...');
-  console.log('Request body:', req.body);
-  
-  try {
-    const { error } = listingSchema.validate(req.body);
-    if (error) {
-      const errMsg = error.details.map((el) => el.message).join(", ");
-      console.log('❌ Validation error:', errMsg);
-      throw new ExpressError(400, errMsg);
-    } else {
-      console.log('✅ Validation passed');
-      next();
-    }
-  } catch (error) {
-    console.log('❌ Validation middleware error:', error.message);
-    next(error);
+  const { error } = listingSchema.validate(req.body);
+  if (error) {
+    const errMsg = error.details.map((el) => el.message).join(", ");
+    throw new ExpressError(400, errMsg);
+  } else {
+    next();
   }
 };
 
 // Validate review input with Joi
 module.exports.validateReview = (req, res, next) => {
-  try {
-    const { error } = reviewSchema.validate(req.body);
-    if (error) {
-      const errMsg = error.details.map((el) => el.message).join(", ");
-      throw new ExpressError(400, errMsg);
-    } else {
-      next();
-    }
-  } catch (error) {
-    next(error);
+  const { error } = reviewSchema.validate(req.body);
+  if (error) {
+    const errMsg = error.details.map((el) => el.message).join(", ");
+    throw new ExpressError(400, errMsg);
+  } else {
+    next();
   }
+};
+
+// Ensure the logged-in user is the owner of the listing
+module.exports.isOwner = async (req, res, next) => {
+  let { id } = req.params;
+  let listing = await Listing.findById(id);
+
+  if (!listing) {
+    return res.status(404).json({ error: "Listing not found!" });
+  }
+
+  // req.user is attached by verifyToken
+  // req.user.id or req.user._id depending on what we put in the payload
+  // We will assume payload has { _id: user._id } or similar.
+  // Standardizing payload to have `_id`.
+
+  if (!req.user || !listing.owner.equals(req.user._id)) {
+    return res.status(403).json({ error: "You don't have permission to edit this listing!" });
+  }
+
+  next();
 };
 
 // Ensure logged-in user is the author of the review
 module.exports.isReviewAuthor = async (req, res, next) => {
   let { id, reviewId } = req.params;
-  
-  if (!res.locals.currUser) {
-    req.flash("error", "You must be logged in to perform this action!");
-    return res.redirect("/login");
-  }
-  
   let review = await Review.findById(reviewId);
 
   if (!review) {
-    req.flash("error", "Review not found!");
-    return res.redirect(`/listings/${id}`);
+    return res.status(404).json({ error: "Review not found!" });
   }
 
-  if (!review.author.equals(res.locals.currUser._id)) {
-    req.flash("error", "You didn't create this review!");
-    return res.redirect(`/listings/${id}`);
+  if (!req.user || !review.author.equals(req.user._id)) {
+    return res.status(403).json({ error: "You didn't create this review!" });
   }
 
   next();

@@ -4,31 +4,25 @@ const Review = require("../models/review");
 // CREATE Review
 module.exports.createReview = async (req, res) => {
   const { id } = req.params;
-  const listing = await Listing.findById(id);
-
-  if (!listing) {
-    req.flash("error", "Listing not found.");
-    return res.redirect("/listings");
-  }
 
   if (!req.body.review) {
-    req.flash("error", "Review data is required.");
-    return res.redirect(`/listings/${id}`);
+    return res.status(400).json({ error: "Review data is required." });
   }
 
-  const newReview = new Review(req.body.review);
-  newReview.author = req.user._id;
-
-  listing.reviews.push(newReview);
-
   try {
+    const listing = await Listing.findById(id);
+    if (!listing) return res.status(404).json({ error: "Listing not found." });
+
+    const newReview = new Review(req.body.review);
+    newReview.author = req.user._id;
+
+    listing.reviews.push(newReview);
     await newReview.save();
     await listing.save();
-    req.flash("success", "New review created!");
-    res.redirect(`/listings/${id}`);
+
+    res.status(201).json({ message: "New review created!", review: newReview });
   } catch (error) {
-    req.flash("error", "Failed to create review. Please try again.");
-    res.redirect(`/listings/${id}`);
+    res.status(500).json({ error: "Failed to create review." });
   }
 };
 
@@ -36,31 +30,12 @@ module.exports.createReview = async (req, res) => {
 module.exports.deleteReview = async (req, res) => {
   const { id, reviewId } = req.params;
 
-  // Check if listing exists
-  const listing = await Listing.findById(id);
-  if (!listing) {
-    req.flash("error", "Listing not found!");
-    return res.redirect("/listings");
-  }
-
-  // Check if review exists
-  const review = await Review.findById(reviewId);
-  if (!review) {
-    req.flash("error", "Review not found!");
-    return res.redirect(`/listings/${id}`);
-  }
-
   try {
-    // Remove review reference from listing
     await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
-
-    // Delete review itself
     await Review.findByIdAndDelete(reviewId);
 
-    req.flash("success", "Review deleted successfully!");
-    res.redirect(`/listings/${id}`);
+    res.json({ message: "Review deleted successfully!" });
   } catch (error) {
-    req.flash("error", "Failed to delete review. Please try again.");
-    res.redirect(`/listings/${id}`);
+    res.status(500).json({ error: "Failed to delete review." });
   }
 };

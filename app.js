@@ -19,7 +19,11 @@ const reviewsRouter = require("./routes/reviews.js");
 const userRouter = require("./routes/user.js");
 
 // Middleware
-app.use(cors()); // Allow Cross-Origin requests
+const corsOptions = {
+  origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, "http://localhost:5173"] : "*",
+  credentials: true,
+};
+app.use(cors(corsOptions)); // Allow Cross-Origin requests
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
 

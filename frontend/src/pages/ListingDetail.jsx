@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, MapPin, Users, Bed, Bath, Wifi, Car, Coffee, Tv, Wind, CheckCircle2, X, ChevronLeft, ChevronRight, Share, Heart } from "lucide-react";
+import { Star, MapPin, Users, Bed, Bath, Wifi, Car, Coffee, Tv, Wind, CheckCircle2, X, ChevronLeft, ChevronRight, Share, Heart, Grid } from "lucide-react";
 import api from "../lib/axios";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../components/Toast";

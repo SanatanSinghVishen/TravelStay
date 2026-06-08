@@ -89,7 +89,12 @@ app.all("*", (req, res, next) => {
 // Error handler
 app.use((err, req, res, next) => {
   // Passport with failWithError:true uses err.status (not err.statusCode)
-  const statusCode = err.statusCode || err.status || 500;
+  let statusCode = err.statusCode || err.status || 500;
+  
+  if (err.name === "AuthenticationError" || err.message === "Unauthorized") {
+    statusCode = 401;
+  }
+
   const message = err.message || "Something went wrong!";
 
   if (statusCode >= 500) {

@@ -1,7 +1,8 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+// In production (Vercel), we use the /api proxy rewrite to avoid third-party cookie blocking
+const BASE_URL = import.meta.env.PROD ? "/api" : "http://localhost:3001";
 
 const api = axios.create({
     baseURL: BASE_URL,

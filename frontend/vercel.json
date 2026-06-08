@@ -1,6 +1,10 @@
 {
     "rewrites": [
         {
+            "source": "/api/:path*",
+            "destination": "https://travelstay-huud.onrender.com/:path*"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

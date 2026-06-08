@@ -2,6 +2,8 @@ const env = require("./env"); // Fix 5: Startup Environment Validation (must be 
 
 const express = require("express");
 const app = express();
+app.set("trust proxy", 1); // Fix: Trust Render's reverse proxy so Secure cookies work
+
 const mongoose = require("mongoose");
 const cors = require("cors");
 const ExpressError = require("./utils/ExpressError.js");

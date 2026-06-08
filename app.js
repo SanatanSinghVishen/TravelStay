@@ -76,7 +76,13 @@ app.use("/", userRouter); // User router has its own specific limiters for auth
 
 // CSRF Token endpoint (Fix 3: CSRF)
 const csurf = require("csurf");
-const csrfProtection = csurf({ cookie: true });
+const csrfProtection = csurf({ 
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
+  } 
+});
 app.get("/csrf-token", csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });

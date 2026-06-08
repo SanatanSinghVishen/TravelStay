@@ -5,13 +5,14 @@ const Listing = require("../models/listing");
 const fs = require("fs");
 const path = require("path");
 const logger = require("../utils/logger");
-const env = require("../env");
 
-const REDIS_URL = env.REDIS_URL;
+// Read directly from process.env to bypass any envalid URL normalization
+const REDIS_URL = process.env.REDIS_URL || "redis://127.0.0.1:6379";
 const isTLS = REDIS_URL.startsWith("rediss://");
 
-// Use ioredis createClient factory — the only reliable way to pass TLS
-// config (required for Upstash) through Bull's internal ioredis instance.
+// Diagnostic: log first 30 chars so we can confirm the URL in production logs
+logger.info(`🔗 Redis connecting to: ${REDIS_URL.substring(0, 30)}... (TLS: ${isTLS})`);
+
 const makeRedisClient = () =>
   new IORedis(REDIS_URL, {
     tls: isTLS ? { rejectUnauthorized: false } : undefined,
@@ -20,11 +21,9 @@ const makeRedisClient = () =>
   });
 
 const uploadQueue = new Queue("image-upload", {
-  createClient: (type) => {
-    // Bull needs three separate client instances
-    return makeRedisClient();
-  },
+  createClient: () => makeRedisClient(),
 });
+
 
 uploadQueue.process(async (job) => {
   const { listingId, filePath, folderName } = job.data;

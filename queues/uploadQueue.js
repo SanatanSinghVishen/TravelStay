@@ -1,4 +1,5 @@
 const Queue = require("bull");
+const IORedis = require("ioredis");
 const { cloudinary } = require("../cloudConfig");
 const Listing = require("../models/listing");
 const fs = require("fs");
@@ -7,17 +8,22 @@ const logger = require("../utils/logger");
 const env = require("../env");
 
 const REDIS_URL = env.REDIS_URL;
-
-// Upstash Redis uses TLS (rediss://). Bull requires explicit ioredis options for TLS.
 const isTLS = REDIS_URL.startsWith("rediss://");
-const uploadQueue = new Queue("image-upload", {
-  redis: {
-    enableReadyCheck: false,
-    maxRetriesPerRequest: null,
+
+// Use ioredis createClient factory — the only reliable way to pass TLS
+// config (required for Upstash) through Bull's internal ioredis instance.
+const makeRedisClient = () =>
+  new IORedis(REDIS_URL, {
     tls: isTLS ? { rejectUnauthorized: false } : undefined,
-    // Pass the full URL via lazyConnect so ioredis parses host/port/auth
-    ...(isTLS ? { url: REDIS_URL } : { url: REDIS_URL })
-  }
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+  });
+
+const uploadQueue = new Queue("image-upload", {
+  createClient: (type) => {
+    // Bull needs three separate client instances
+    return makeRedisClient();
+  },
 });
 
 uploadQueue.process(async (job) => {

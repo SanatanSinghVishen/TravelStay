@@ -4,7 +4,7 @@ const { MemoryStore } = require("express-rate-limit");
 // Prevent brute-force login/signup and credential stuffing attacks
 module.exports.authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 requests per `window`
+  max: 25, // Limit each IP to 25 requests per `window`
   message: { error: "Too many requests. Try again later." },
   store: new MemoryStore(), // Explicitly configured MemoryStore as per instructions
 });

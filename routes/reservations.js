@@ -1,15 +1,14 @@
 const express = require("express");
 const router = express.Router({ mergeParams: true });
 const reservations = require("../controllers/reservations");
-const { isLoggedIn } = require("../middleware");
+const { verifyToken } = require("../middleware");
+const csurf = require("csurf");
+const csrfProtection = csurf({ cookie: true });
 
 // Routes for /api/reservations
-router.get("/", isLoggedIn, reservations.getUserReservations);
+router.get("/", verifyToken, reservations.getUserReservations);
 
 // Routes for /api/listings/:id/reservations
-// Note: We'll export the controller functions and handle the routing in app.js
-// so that we can mount it under /api/listings/:id/reservations easily.
-
-router.post("/", isLoggedIn, reservations.createReservation);
+router.post("/", verifyToken, csrfProtection, reservations.createReservation);
 
 module.exports = router;

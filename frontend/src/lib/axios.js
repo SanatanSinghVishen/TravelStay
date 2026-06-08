@@ -1,6 +1,4 @@
 import axios from "axios";
-import toast from "react-hot-toast";
-
 // In production (Vercel), we use the /api proxy rewrite to avoid third-party cookie blocking
 const BASE_URL = import.meta.env.PROD ? "/api" : "http://localhost:3001";
 
@@ -45,13 +43,11 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
         const status = error.response?.status;
-        
         if (status === 429) {
-            toast.error("Too many requests. Slow down.");
+            console.error("Too many requests. Slow down.");
         } else if (status >= 500) {
-            toast.error("Server error. Try again shortly.");
+            console.error("Server error. Try again shortly.");
         }
-        
         if (status === 401 && !originalRequest._retry) {
             if (originalRequest.url === '/auth/refresh' || originalRequest.url === '/login') {
                 localStorage.removeItem("user");

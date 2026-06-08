@@ -1,8 +1,9 @@
 const mongoose = require("mongoose");
 const initData = require("./data.js");
 const Listing = require("../models/listing.js");
+require("dotenv").config({ path: "../.env" });
 
-const MONGO_URL = "mongodb+srv://TravelStay:wKw72f5qDWZhZy35@cluster0.yfygl4o.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const MONGO_URL = process.env.MONGO_URI;
 
 async function main() {
   try {

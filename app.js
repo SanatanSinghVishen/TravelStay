@@ -88,10 +88,12 @@ app.all("*", (req, res, next) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  let { statusCode = 500, message = "Something went wrong!" } = err;
-  
-  if (statusCode === 500) {
-    logger.error(err.stack || err.message); // Fix 4: Structured Logging
+  // Passport with failWithError:true uses err.status (not err.statusCode)
+  const statusCode = err.statusCode || err.status || 500;
+  const message = err.message || "Something went wrong!";
+
+  if (statusCode >= 500) {
+    logger.error({ err }, err.stack || err.message);
   } else {
     logger.warn({ statusCode, message }, "Client error");
   }

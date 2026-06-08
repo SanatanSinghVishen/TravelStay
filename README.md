@@ -1,183 +1,117 @@
-# TravelStay - Airbnb Clone
+# TravelStay
 
-A full-stack web application built with Node.js, Express, MongoDB, and EJS that allows users to create, view, edit, and delete travel listings with image uploads via Cloudinary.
+A premium, consumer-grade travel and accommodation platform. TravelStay allows users to discover, list, and book unique stays around the world.
+
+![TravelStay Showcase](https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg)
+
+## 🌟 Architecture
+
+TravelStay is built using a modern decoupled architecture (MERN stack):
+
+### Frontend (React + Vite)
+- **Framework**: React 18, Vite
+- **Routing**: React Router DOM v6
+- **State & Data**: React Context API, Axios (configured for Cross-Origin cookies)
+- **Animations**: Framer Motion (for buttery smooth page transitions, layout animations, and 3D tilts)
+- **Styling**: Custom CSS Variables Design System (Vanilla CSS, no bulky UI frameworks)
+- **Icons**: Lucide React
+
+### Backend (Node.js + Express)
+- **Framework**: Node.js, Express.js
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: JWT & Passport.js (Secure HTTP-Only Cookies with `SameSite=None`)
+- **Security**: CSRF Protection (`csurf`), Helmet, Express Mongo Sanitize
+- **File Upload**: Multer with Cloudinary integration
 
 ## 🚀 Features
 
-- **User Authentication**: Sign up, login, and logout functionality
-- **CRUD Operations**: Create, read, update, and delete travel listings
-- **Image Upload**: Cloudinary integration for image storage
-- **Reviews System**: Users can leave reviews and ratings for listings
-- **Responsive Design**: Mobile-friendly interface
-- **Session Management**: MongoDB-based session storage
-- **Security**: Input validation and sanitization
-
-## 🛠️ Tech Stack
-
-- **Backend**: Node.js, Express.js
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: Passport.js with Local Strategy
-- **File Upload**: Multer with Cloudinary storage
-- **Template Engine**: EJS
-- **Styling**: Bootstrap CSS
-- **Session Storage**: Connect-Mongo
-- **Validation**: Joi
+- **Premium UI/UX**: Custom cursor, skeleton loading shimmers, 3D tilt cards, and abstract glassmorphism elements.
+- **Fluid Animations**: Page transitions and interactive micro-animations powered by Framer Motion.
+- **User Authentication**: Secure signup and login using encrypted HTTP-only cookies. Cross-origin authentication supported.
+- **Dynamic Listings**: View properties in Grid or List modes. Full pagination support.
+- **Create Listings**: A beautiful 5-step animated wizard for hosting new properties with live image previews.
+- **Reviews**: Leave ratings and reviews on properties.
 
 ## 📋 Prerequisites
 
-- Node.js (v14 or higher)
+- Node.js (v18 or higher)
 - MongoDB Atlas account
 - Cloudinary account
-- Git
 
-## 🔧 Installation
+## 🔧 Installation & Local Development
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/TravelStay.git
-   cd TravelStay
-   ```
+Because the project is decoupled, you must run both the backend and frontend servers simultaneously.
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+### 1. Backend Setup
 
-3. **Set up environment variables**
-   Create a `.env` file in the root directory:
-   ```env
-   NODE_ENV=development
-   PORT=3000
-   SECRET=your-super-secret-key-here
-   CLOUD_NAME=your-cloudinary-cloud-name
-   CLOUD_API_KEY=your-cloudinary-api-key
-   CLOUD_API_SECRET=your-cloudinary-api-secret
-   ATLAS_DB=mongodb+srv://username:password@cluster.mongodb.net/travelstay
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/SanatanSinghVishen/TravelStay.git
+cd TravelStay
 
-4. **Start the development server**
-   ```bash
-   npm run dev
-   ```
+# Install dependencies
+npm install
 
-## 🚀 Deployment on Render
-
-### Option 1: Using render.yaml (Recommended)
-
-1. **Push your code to GitHub**
-   ```bash
-   git add .
-   git commit -m "Prepare for Render deployment"
-   git push origin main
-   ```
-
-2. **Connect to Render**
-   - Go to [Render Dashboard](https://dashboard.render.com)
-   - Click "New +" and select "Blueprint"
-   - Connect your GitHub repository
-   - Render will automatically detect the `render.yaml` file
-
-3. **Set Environment Variables**
-   In your Render dashboard, add these environment variables:
-   - `NODE_ENV`: `production`
-   - `PORT`: `10000`
-   - `SECRET`: Generate a strong secret
-   - `CLOUD_NAME`: Your Cloudinary cloud name
-   - `CLOUD_API_KEY`: Your Cloudinary API key
-   - `CLOUD_API_SECRET`: Your Cloudinary API secret
-   - `ATLAS_DB`: Your MongoDB Atlas connection string
-
-### Option 2: Manual Deployment
-
-1. **Create a new Web Service**
-   - Go to [Render Dashboard](https://dashboard.render.com)
-   - Click "New +" and select "Web Service"
-   - Connect your GitHub repository
-
-2. **Configure the service**
-   - **Name**: `travelstay`
-   - **Environment**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Plan**: Free (or choose a paid plan)
-
-3. **Set Environment Variables**
-   Add the same environment variables as mentioned above.
-
-## 🔐 Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NODE_ENV` | Environment (development/production) | Yes |
-| `PORT` | Server port | Yes |
-| `SECRET` | Session secret key | Yes |
-| `CLOUD_NAME` | Cloudinary cloud name | Yes |
-| `CLOUD_API_KEY` | Cloudinary API key | Yes |
-| `CLOUD_API_SECRET` | Cloudinary API secret | Yes |
-| `ATLAS_DB` | MongoDB Atlas connection string | Yes |
-
-## 📁 Project Structure
-
-```
-TravelStay/
-├── controllers/          # Route controllers
-├── models/              # Database models
-├── routes/              # Express routes
-├── views/               # EJS templates
-├── public/              # Static files
-├── utils/               # Utility functions
-├── middleware.js        # Custom middleware
-├── cloudConfig.js       # Cloudinary configuration
-├── app.js              # Main application file
-├── package.json         # Dependencies and scripts
-└── render.yaml          # Render deployment config
+# Create environment variables
+touch .env
 ```
 
-## 🎯 API Endpoints
+Add the following to your backend `.env`:
+```env
+NODE_ENV=development
+PORT=3001
+SECRET=your-super-secret-key-here
+CLOUD_NAME=your-cloudinary-cloud-name
+CLOUD_API_KEY=your-cloudinary-api-key
+CLOUD_API_SECRET=your-cloudinary-api-secret
+ATLAS_DB=mongodb+srv://username:password@cluster.mongodb.net/travelstay
+```
 
-- `GET /` - Home page
-- `GET /listings` - All listings
-- `GET /listings/new` - Create new listing form
-- `POST /listings` - Create new listing
-- `GET /listings/:id` - View specific listing
-- `GET /listings/:id/edit` - Edit listing form
-- `PUT /listings/:id` - Update listing
-- `DELETE /listings/:id` - Delete listing
-- `GET /signup` - Signup form
-- `POST /signup` - User registration
-- `GET /login` - Login form
-- `POST /login` - User authentication
-- `GET /logout` - User logout
+Start the backend server:
+```bash
+npm start
+# Server will run on http://localhost:3001
+```
 
-## 🔧 Development Scripts
+### 2. Frontend Setup
 
-- `npm start` - Start production server
-- `npm run dev` - Start development server with nodemon
-- `npm test` - Run tests (if configured)
+In a new terminal window:
 
-## 🤝 Contributing
+```bash
+cd TravelStay/frontend
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+# Install dependencies
+npm install
+
+# Start the Vite development server
+npm run dev
+# Frontend will run on http://localhost:5173
+```
+
+## 🚀 Deployment
+
+The application is built to be deployed on modern cloud platforms.
+
+### Frontend Deployment (Vercel)
+The frontend is optimized for deployment on Vercel.
+1. Import the `/frontend` directory to a new Vercel project.
+2. In Vercel Project Settings > General > Build & Development Settings, ensure:
+   - Framework Preset: Vite
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+3. Make sure to configure CORS settings appropriately in the backend to accept requests from your new Vercel domain.
+
+### Backend Deployment (Render)
+The backend is configured to run on Render via the `render.yaml` blueprint.
+1. Connect your repository to Render.
+2. Add your environment variables in the Render Dashboard (make sure `NODE_ENV=production`).
+3. Ensure the `trust proxy` setting is enabled in `app.js` so secure cookies work behind Render's load balancer.
+
+## 👨‍💻 Authors
+
+- **Sanatan Singh** - [@SanatanSinghVishen](https://github.com/SanatanSinghVishen)
+- **Sundram Kumar** - [@Sundram556](https://github.com/sundram556)
 
 ## 📝 License
 
 This project is licensed under the ISC License.
-
-## 👨‍💻 Author
-
-**Sanatan Singh**
-**Sundram Kumar** 
-- GitHub: [@SanatanSinghVishen](https://github.com/SanatanSinghVishen)
-- GitHub: [@Sundram556](https://github.com/sundram556)
-
-## 🙏 Acknowledgments
-
-- [Express.js](https://expressjs.com/) - Web framework
-- [MongoDB](https://www.mongodb.com/) - Database
-- [Cloudinary](https://cloudinary.com/) - Image storage
-- [Bootstrap](https://getbootstrap.com/) - CSS framework
-- [Render](https://render.com/) - Deployment platform

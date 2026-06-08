@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import api from "../api/axios";
+import api from "../lib/axios";
 import { useAuth } from "../context/AuthContext";
+import { Helmet } from "react-helmet-async";
 
 const ListingDetail = () => {
     const { id } = useParams();
@@ -60,6 +61,13 @@ const ListingDetail = () => {
 
     return (
         <div className="container detail-container">
+            <Helmet>
+                <title>{listing.title} — TravelStay</title>
+                <meta name="description" content={listing.description?.slice(0, 155)} />
+                <meta property="og:image" content={listing.image?.url} />
+                <meta property="og:title" content={listing.title} />
+                <link rel="canonical" href={window.location.href} />
+            </Helmet>
             <div className="detail-header">
                 <h1 className="detail-title">{listing.title}</h1>
                 <p className="card-loc">{listing.location}, {listing.country}</p>

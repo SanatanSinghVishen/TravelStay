@@ -22,8 +22,9 @@ const userSchema = new Schema({
 });
 
 // Add indexes for better performance
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
+// Fix 2: Database Indexes
+userSchema.index({ email: 1 }); // Optimises fetching/validating users by email (unique constraint)
+userSchema.index({ username: 1 }); // Optimises fetching/validating users by username (unique constraint)
 
 userSchema.plugin(passportLocalMongoose);
 

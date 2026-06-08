@@ -7,7 +7,9 @@ import Signup from './pages/Signup';
 import ListingDetail from './pages/ListingDetail';
 import CreateListing from './pages/CreateListing';
 import { useAuth } from './context/AuthContext';
-import api from './api/axios';
+import api from './lib/axios';
+import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Protected Route Wrapper (Simple)
 const ProtectedRoute = ({ children }) => {
@@ -77,18 +79,21 @@ function App() {
     <>
       {bannerVisible && <WakeUpBanner onDismiss={() => setBannerVisible(false)} />}
       <Navbar />
+      <Toaster position="top-right" />
       <div className="main-content">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/listings" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+          <Route path="/listings" element={<ErrorBoundary><Home /></ErrorBoundary>} />
+          <Route path="/login" element={<ErrorBoundary><Login /></ErrorBoundary>} />
+          <Route path="/signup" element={<ErrorBoundary><Signup /></ErrorBoundary>} />
           <Route path="/listings/new" element={
-            <ProtectedRoute>
-              <CreateListing />
-            </ProtectedRoute>
+            <ErrorBoundary>
+              <ProtectedRoute>
+                <CreateListing />
+              </ProtectedRoute>
+            </ErrorBoundary>
           } />
-          <Route path="/listings/:id" element={<ListingDetail />} />
+          <Route path="/listings/:id" element={<ErrorBoundary><ListingDetail /></ErrorBoundary>} />
         </Routes>
       </div>
     </>

@@ -6,7 +6,8 @@ const jwt = require("jsonwebtoken");
 
 // Middleware to verify JWT Token
 module.exports.verifyToken = (req, res, next) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+  // Extract token from HTTP-only cookie (Fix 3: CSRF and Token Storage)
+  const token = req.cookies.token;
 
   if (!token) {
     return res.status(401).json({ error: "Access denied. No token provided." });

@@ -2,11 +2,19 @@ const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 
 const SECRET = process.env.SECRET || "fallback-secret-key";
+const REFRESH_SECRET = process.env.REFRESH_SECRET || "fallback-refresh-secret-key";
 
-// Helper to generate Token
+// Helper to generate Access Token
 const generateToken = (user) => {
   return jwt.sign({ _id: user._id, username: user.username, email: user.email }, SECRET, {
-    expiresIn: "7d",
+    expiresIn: "15m", // Fix 3: 15 minutes expiry
+  });
+};
+
+// Helper to generate Refresh Token
+const generateRefreshToken = (user) => {
+  return jwt.sign({ _id: user._id }, REFRESH_SECRET, {
+    expiresIn: "7d", // Fix 3: 7 days expiry
   });
 };
 
@@ -22,12 +30,27 @@ module.exports.signup = async (req, res, next) => {
     const newUser = new User({ email, username });
     const registeredUser = await User.register(newUser, password);
 
-    // Generate Token
+    // Generate Tokens
     const token = generateToken(registeredUser);
+    const refreshToken = generateRefreshToken(registeredUser);
+
+    // Set HTTP-Only Cookies (Fix 3: CSRF and Token Storage)
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60 * 1000 // 15 mins
+    });
+    
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
 
     res.status(201).json({
       message: "User registered successfully",
-      token,
       user: { _id: registeredUser._id, username: registeredUser.username, email: registeredUser.email }
     });
 
@@ -42,16 +65,33 @@ module.exports.login = (req, res) => {
   // If we are here, req.user is populated by Passport
 
   const token = generateToken(req.user);
+  const refreshToken = generateRefreshToken(req.user);
+
+  // Set HTTP-Only Cookies (Fix 3: CSRF and Token Storage)
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 15 * 60 * 1000 // 15 mins
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  });
 
   res.json({
     message: "Logged in successfully",
-    token,
     user: { _id: req.user._id, username: req.user.username, email: req.user.email }
   });
 };
 
 // LOGOUT
 module.exports.logout = (req, res) => {
-  // Client should simply discard the token
+  // Clear the cookies (Fix 3: CSRF and Token Storage)
+  res.clearCookie("token");
+  res.clearCookie("refreshToken");
   res.json({ message: "Logged out successfully" });
 };

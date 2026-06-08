@@ -17,6 +17,11 @@ const listingSchema = new Schema({
     url: String,
     filename: String,
   },
+  imageStatus: {
+    type: String,
+    enum: ["pending", "ready"],
+    default: "ready"
+  },
   price: {
     type: Number,
     required: true,
@@ -51,6 +56,11 @@ listingSchema.post("findOneAndDelete", async (listing) => {
     await Review.deleteMany({ _id: { $in: listing.reviews } });
   }
 });
+
+// Fix 2: Database Indexes
+listingSchema.index({ owner: 1 }); // Optimises fetching "my listings" queries
+listingSchema.index({ location: 1 }); // Optimises geo/filter queries
+listingSchema.index({ title: 'text', description: 'text' }); // Optimises text search
 
 const Listing = mongoose.model("Listing", listingSchema);
 module.exports = Listing;

@@ -1,6 +1,4 @@
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
-}
+const env = require("./env"); // Fix 5: Startup Environment Validation (must be first)
 
 const express = require("express");
 const app = express();
@@ -10,22 +8,41 @@ const ExpressError = require("./utils/ExpressError.js");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
+const pinoHttp = require("pino-http");
+const logger = require("./utils/logger");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
+const { apiLimiter } = require("./utils/rateLimiters.js");
 
 // Database connection
-const dburl = process.env.ATLAS_DB || "mongodb://127.0.0.1:27017/travelstay";
+const dburl = env.MONGO_URI;
 
 const listingRouter = require("./routes/listing.js");
 const reviewsRouter = require("./routes/reviews.js");
 const userRouter = require("./routes/user.js");
 
+// HTTP Security Headers (Fix: helmet must be first middleware)
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+      },
+    },
+  })
+);
+
 // Middleware
 const corsOptions = {
-  origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, "http://localhost:5173"] : "*",
+  origin: env.FRONTEND_URL, // Fix: strict CORS restriction
   credentials: true,
 };
 app.use(cors(corsOptions)); // Allow Cross-Origin requests
+app.use(pinoHttp({ logger })); // Fix 4: Structured Logging
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // Parse cookies
 
 // Passport Configuration (Stateless)
 app.use(passport.initialize());
@@ -51,9 +68,18 @@ app.get("/", (req, res) => {
 // The routers themselves define the subpaths. 
 // listingRouter handles "/" -> so app.use("/listings") makes it "/listings/"
 // Let's keep the existing path structure for now but return JSON.
-app.use("/listings", listingRouter);
-app.use("/listings/:id/reviews", reviewsRouter);
-app.use("/", userRouter);
+
+// Apply API rate limiter to data endpoints (Fix 1: rate limit)
+app.use("/listings", apiLimiter, listingRouter);
+app.use("/listings/:id/reviews", apiLimiter, reviewsRouter);
+app.use("/", userRouter); // User router has its own specific limiters for auth
+
+// CSRF Token endpoint (Fix 3: CSRF)
+const csurf = require("csurf");
+const csrfProtection = csurf({ cookie: true });
+app.get("/csrf-token", csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
 // 404 handler
 app.all("*", (req, res, next) => {
@@ -63,30 +89,46 @@ app.all("*", (req, res, next) => {
 // Error handler
 app.use((err, req, res, next) => {
   let { statusCode = 500, message = "Something went wrong!" } = err;
-  console.error(`❌ Error ${statusCode}: ${message}`);
-  // if (err.stack) console.error(err.stack);
+  
+  if (statusCode === 500) {
+    logger.error(err.stack || err.message); // Fix 4: Structured Logging
+  } else {
+    logger.warn({ statusCode, message }, "Client error");
+  }
+
   res.status(statusCode).json({ error: message, statusCode });
 });
 
 // Connect to MongoDB
 async function main() {
   try {
-    const mongooseOptions = {};
+    const mongooseOptions = {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+    };
+    
     if (dburl.includes("mongodb+srv://")) {
       mongooseOptions.tls = true;
       mongooseOptions.tlsAllowInvalidCertificates = true;
     }
 
     await mongoose.connect(dburl, mongooseOptions);
-    console.log(`✅ Connected to MongoDB at ${dburl}`);
+    logger.info(`✅ Connected to MongoDB at ${dburl}`);
 
-    const port = process.env.PORT || 3001;
+    const port = env.PORT || 3001;
     app.listen(port, "0.0.0.0", () => {
-      console.log(`🚀 API Server listening on port ${port}`);
+      logger.info(`🚀 API Server listening on port ${port}`);
     });
   } catch (error) {
-    console.error("❌ Failed to connect to MongoDB:", error.message);
+    logger.error({ err: error }, "❌ Failed to connect to MongoDB");
+    process.exit(1); // Fix 3: Crash process on failed initial connection
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = app;

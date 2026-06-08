@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
+import api from "../lib/axios";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 const Home = () => {
     const [listings, setListings] = useState([]);
@@ -24,6 +25,10 @@ const Home = () => {
 
     return (
         <div className="container">
+            <Helmet>
+                <title>TravelStay — Find your next adventure</title>
+                <meta name="description" content="Discover and book amazing homes, apartments, and unique places to stay around the world with TravelStay." />
+            </Helmet>
             <div className="listings-grid">
                 {listings.map((listing) => (
                     <Link to={`/listings/${listing._id}`} key={listing._id} className="listing-card">

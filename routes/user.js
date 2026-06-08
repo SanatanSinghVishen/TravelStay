@@ -7,9 +7,10 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const validateRequest = require("../middleware/validate.js");
 const { signupSchema, loginSchema } = require("../schemas/authSchema.js");
+const env = require("../env");
 
-const SECRET = process.env.SECRET || "fallback-secret-key";
-const REFRESH_SECRET = process.env.REFRESH_SECRET || "fallback-refresh-secret-key";
+const SECRET = env.JWT_SECRET;
+const REFRESH_SECRET = env.REFRESH_SECRET;
 
 // POST /auth/refresh (Fix 3: JWT Hardening)
 router.post("/auth/refresh", async (req, res) => {

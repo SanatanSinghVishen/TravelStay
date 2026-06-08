@@ -3,6 +3,7 @@ const Review = require("./models/review");
 const { listingSchema, reviewSchema } = require("./schema.js");
 const ExpressError = require("./utils/ExpressError.js");
 const jwt = require("jsonwebtoken");
+const env = require("./env");
 
 // Middleware to verify JWT Token
 module.exports.verifyToken = (req, res, next) => {
@@ -14,8 +15,8 @@ module.exports.verifyToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.SECRET || "fallback-secret-key");
-    req.user = decoded; // Attach user payload to request
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+    req.user = decoded;
     next();
   } catch (ex) {
     res.status(400).json({ error: "Invalid token." });

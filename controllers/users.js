@@ -1,8 +1,9 @@
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
+const env = require("../env");
 
-const SECRET = process.env.SECRET || "fallback-secret-key";
-const REFRESH_SECRET = process.env.REFRESH_SECRET || "fallback-refresh-secret-key";
+const SECRET = env.JWT_SECRET;
+const REFRESH_SECRET = env.REFRESH_SECRET;
 
 // Helper to generate Access Token
 const generateToken = (user) => {

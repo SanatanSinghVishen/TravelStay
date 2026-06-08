@@ -1,14 +1,15 @@
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const logger = require('./utils/logger');
 
-// Configure Cloudinary
+// Configure Cloudinary — uses envalid-validated env var names
 cloudinary.config({
-    cloud_name: process.env.CLOUD_NAME,
-    api_key: process.env.CLOUD_API_KEY,
-    api_secret: process.env.CLOUD_API_SECRET
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-console.log('✅ Cloudinary configured successfully');
+logger.info('✅ Cloudinary configured successfully');
 
 // Create Cloudinary storage for multer
 const storage = new CloudinaryStorage({
@@ -24,6 +25,6 @@ const storage = new CloudinaryStorage({
     }
 });
 
-console.log('✅ Cloudinary storage configured successfully');
+logger.info('✅ Cloudinary storage configured successfully');
 
 module.exports = { cloudinary, storage };

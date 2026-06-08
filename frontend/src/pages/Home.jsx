@@ -6,20 +6,36 @@ import { Helmet } from "react-helmet-async";
 const Home = () => {
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [cursor, setCursor] = useState(null);
+    const [hasMore, setHasMore] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+
+    const fetchListings = async (currentCursor = null) => {
+        try {
+            const params = { limit: 20 };
+            if (currentCursor) params.cursor = currentCursor;
+            const res = await api.get("/listings", { params });
+            // Backend returns { data: [...], nextCursor, hasMore }
+            const { data, nextCursor, hasMore } = res.data;
+            setListings(prev => currentCursor ? [...prev, ...data] : data);
+            setCursor(nextCursor);
+            setHasMore(hasMore);
+        } catch (err) {
+            console.error("Failed to fetch listings", err);
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchListings = async () => {
-            try {
-                const res = await api.get("/listings");
-                setListings(res.data);
-            } catch (err) {
-                console.error("Failed to fetch listings", err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchListings();
     }, []);
+
+    const handleLoadMore = () => {
+        setLoadingMore(true);
+        fetchListings(cursor);
+    };
 
     if (loading) return <div className="spinner"></div>;
 
@@ -45,6 +61,17 @@ const Home = () => {
                     </Link>
                 ))}
             </div>
+            {hasMore && (
+                <div style={{ textAlign: 'center', margin: '32px 0' }}>
+                    <button
+                        className="btn-primary"
+                        onClick={handleLoadMore}
+                        disabled={loadingMore}
+                    >
+                        {loadingMore ? "Loading..." : "Load More"}
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

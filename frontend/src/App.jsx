@@ -9,6 +9,8 @@ import ListingDetail from './pages/ListingDetail';
 import CreateListing from './pages/CreateListing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
 import { useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Toast';
 import api from './lib/axios';
@@ -103,6 +105,8 @@ function AnimatedRoutes() {
         <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
         <Route path="/register" element={<PageWrapper><Signup /></PageWrapper>} />
         <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
+        <Route path="/privacy" element={<PageWrapper><Privacy /></PageWrapper>} />
+        <Route path="/terms" element={<PageWrapper><Terms /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
   );

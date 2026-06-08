@@ -35,7 +35,7 @@ export default function ListingsPage() {
   
   const [viewMode, setViewMode] = useState('grid');
   const [filterOpen, setFilterOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('location') || '');
 
   const fetchListings = async (currentCursor = null, reset = false) => {
     try {
@@ -45,7 +45,16 @@ export default function ListingsPage() {
       
       const res = await api.get("/listings", { params });
       const payload = res.data;
-      const incoming = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+      let incoming = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+
+      const locationParam = searchParams.get('location');
+      if (locationParam) {
+        incoming = incoming.filter(l => 
+          l.location?.toLowerCase().includes(locationParam.toLowerCase()) || 
+          l.country?.toLowerCase().includes(locationParam.toLowerCase()) ||
+          l.title?.toLowerCase().includes(locationParam.toLowerCase())
+        );
+      }
 
       setListings(prev => reset ? incoming : [...prev, ...incoming]);
       setCursor(payload?.nextCursor ?? null);
@@ -62,12 +71,12 @@ export default function ListingsPage() {
   useEffect(() => {
     setLoading(true);
     fetchListings(null, true);
-  }, [searchParams.get('category')]);
+  }, [searchParams.get('category'), searchParams.get('location')]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery) {
-      setSearchParams({ q: searchQuery });
+      setSearchParams({ location: searchQuery });
     } else {
       setSearchParams({});
     }

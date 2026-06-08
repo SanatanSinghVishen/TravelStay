@@ -37,6 +37,8 @@ export default function ListingDetail() {
   
   const [guests, setGuests] = useState(1);
   const [reserving, setReserving] = useState(false);
+  const [checkin, setCheckin] = useState('');
+  const [checkout, setCheckout] = useState('');
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -53,17 +55,48 @@ export default function ListingDetail() {
     fetchListing();
   }, [id, addToast, navigate]);
 
-  const handleReserve = () => {
+  const handleReserve = async () => {
     if (!user) {
       addToast("Please sign in to reserve.", "info");
       navigate('/login');
       return;
     }
+    if (!checkin || !checkout) {
+      addToast("Please select check-in and checkout dates.", "error");
+      return;
+    }
+    if (new Date(checkin) >= new Date(checkout)) {
+      addToast("Checkout must be after check-in.", "error");
+      return;
+    }
+    
     setReserving(true);
-    setTimeout(() => {
+    
+    const diffTime = Math.abs(new Date(checkout) - new Date(checkin));
+    const nights = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    const cleaningFee = 1200;
+    const serviceFee = Math.round(listing.price * nights * 0.15);
+    const totalPrice = (listing.price * nights) + cleaningFee + serviceFee;
+
+    try {
+      await api.post(`/listings/${id}/reservations`, {
+        checkinDate: checkin,
+        checkoutDate: checkout,
+        guests,
+        totalPrice
+      });
+      
+      // Mock payment loading visually
+      setTimeout(() => {
+        setReserving(false);
+        addToast("Reservation created successfully!", "success");
+        setCheckin('');
+        setCheckout('');
+      }, 1500);
+    } catch (err) {
       setReserving(false);
-      addToast("Reservation requested successfully!", "success");
-    }, 1500);
+      addToast(err.response?.data?.message || "Failed to create reservation", "error");
+    }
   };
 
   const handleReviewDelete = async (reviewId) => {
@@ -112,6 +145,18 @@ export default function ListingDetail() {
   const photos = listing.image?.url 
     ? [listing.image.url, null, null] // In a real app, this would be an array of image URLs
     : [null, null, null];
+    
+  const getDays = (start, end) => {
+    if (!start || !end) return 1;
+    const diffTime = Math.abs(new Date(end) - new Date(start));
+    return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  };
+  
+  const nights = getDays(checkin, checkout);
+  const cleaningFee = 1200;
+  const serviceFee = Math.round(listing.price * nights * 0.15);
+  const totalCalculated = (listing.price * nights) + cleaningFee + serviceFee;
+
 
   return (
     <>
@@ -319,11 +364,11 @@ export default function ListingDetail() {
                 <div style={{ display: 'flex', borderBottom: '1px solid var(--color-border)' }}>
                   <div style={{ flex: 1, padding: '12px', borderRight: '1px solid var(--color-border)' }}>
                     <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>Check-in</div>
-                    <div style={{ fontSize: '14px' }}>Add date</div>
+                    <input type="date" value={checkin} onChange={(e) => setCheckin(e.target.value)} min={new Date().toISOString().split('T')[0]} style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px', marginTop: '4px', cursor: 'pointer', fontFamily: 'var(--font-body)' }} />
                   </div>
                   <div style={{ flex: 1, padding: '12px' }}>
                     <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>Checkout</div>
-                    <div style={{ fontSize: '14px' }}>Add date</div>
+                    <input type="date" value={checkout} onChange={(e) => setCheckout(e.target.value)} min={checkin || new Date().toISOString().split('T')[0]} style={{ width: '100%', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px', marginTop: '4px', cursor: 'pointer', fontFamily: 'var(--font-body)' }} />
                   </div>
                 </div>
                 <div style={{ padding: '12px' }}>
@@ -360,20 +405,20 @@ export default function ListingDetail() {
               {/* Price Breakdown */}
               <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '16px', fontSize: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>&#8377; {listing.price?.toLocaleString()} x 5 nights</span>
-                  <span>&#8377; {(listing.price * 5).toLocaleString()}</span>
+                  <span style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>&#8377; {listing.price?.toLocaleString()} x {nights} night{nights > 1 ? 's' : ''}</span>
+                  <span>&#8377; {(listing.price * nights).toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>Cleaning fee</span>
-                  <span>&#8377; 1,200</span>
+                  <span>&#8377; {cleaningFee.toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>TravelStay service fee</span>
-                  <span>&#8377; 2,450</span>
+                  <span>&#8377; {serviceFee.toLocaleString()}</span>
                 </div>
                 <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '1.1rem' }}>
                   <span>Total</span>
-                  <span>&#8377; {(listing.price * 5 + 1200 + 2450).toLocaleString()}</span>
+                  <span>&#8377; {totalCalculated.toLocaleString()}</span>
                 </div>
               </div>
             </div>

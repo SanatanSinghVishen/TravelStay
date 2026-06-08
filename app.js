@@ -22,6 +22,7 @@ const dburl = env.MONGO_URI;
 const listingRouter = require("./routes/listing.js");
 const reviewsRouter = require("./routes/reviews.js");
 const userRouter = require("./routes/user.js");
+const reservationRouter = require("./routes/reservations.js");
 
 // HTTP Security Headers (Fix: helmet must be first middleware)
 app.use(
@@ -74,6 +75,8 @@ app.get("/", (req, res) => {
 // Apply API rate limiter to data endpoints (Fix 1: rate limit)
 app.use("/listings", apiLimiter, listingRouter);
 app.use("/listings/:id/reviews", apiLimiter, reviewsRouter);
+app.use("/listings/:id/reservations", apiLimiter, reservationRouter);
+app.use("/reservations", apiLimiter, reservationRouter);
 app.use("/", userRouter); // User router has its own specific limiters for auth
 
 // CSRF Token endpoint (Fix 3: CSRF)

@@ -83,11 +83,8 @@ export default function Footer() {
           {/* Column 3 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <h4 style={{ color: '#ffffff', fontWeight: 500, fontSize: 'var(--text-sm)', marginBottom: '4px' }}>Company</h4>
-            {['About', 'How it works', 'Become a Host', 'Contact', 'Privacy Policy'].map(link => (
-              <Link key={link} to="#" className="footer-link">
-                {link}
-              </Link>
-            ))}
+            <Link to="/privacy" className="footer-link">Privacy Policy</Link>
+            <Link to="/terms" className="footer-link">Terms of Service</Link>
           </div>
 
           {/* Column 4 */}

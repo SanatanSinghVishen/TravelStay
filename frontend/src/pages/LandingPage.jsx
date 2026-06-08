@@ -91,6 +91,7 @@ const TiltCard = ({ children, bgGradient }) => {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [searchLocation, setSearchLocation] = useState('');
 
   // Hero words
   const words = ["Find", "your", "place", "in", "the", "world."];
@@ -223,34 +224,50 @@ export default function LandingPage() {
               overflowX: 'auto'
             }}
           >
-            {['📍 Where?', '📅 Check-in', '👤 Guests'].map((label, i) => (
-              <div key={label} style={{
-                padding: '12px 24px',
-                display: 'flex',
-                alignItems: 'center',
-                borderRight: i < 2 ? '1px solid rgba(0,0,0,0.1)' : 'none',
-                cursor: 'text',
-                borderRadius: '100px',
-                transition: 'background 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 56, 92, 0.05)'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>{label}</span>
-              </div>
-            ))}
-            <button style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '50%',
-              background: 'var(--color-primary)',
-              border: 'none',
+            <div style={{
+              padding: '12px 24px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              cursor: 'pointer'
-            }} onClick={() => navigate('/listings')}>
+              borderRight: '1px solid rgba(0,0,0,0.1)',
+              borderRadius: '100px',
+              transition: 'background 0.2s',
+              gap: '8px'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 56, 92, 0.05)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <span>📍</span>
+              <input 
+                type="text" 
+                placeholder="Where?"
+                value={searchLocation}
+                onChange={(e) => setSearchLocation(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && navigate(`/listings?location=${searchLocation}`)}
+                style={{ 
+                  background: 'transparent', border: 'none', outline: 'none', 
+                  fontSize: '14px', fontWeight: 500, color: 'var(--color-text-primary)', width: '120px'
+                }}
+              />
+            </div>
+            
+            <div style={{
+              padding: '12px 24px', display: 'flex', alignItems: 'center', borderRight: '1px solid rgba(0,0,0,0.1)',
+              borderRadius: '100px', transition: 'background 0.2s'
+            }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 56, 92, 0.05)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
+              <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>📅 Check-in</span>
+            </div>
+
+            <div style={{
+              padding: '12px 24px', display: 'flex', alignItems: 'center',
+              borderRadius: '100px', transition: 'background 0.2s'
+            }} onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 56, 92, 0.05)'} onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}>
+              <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text-secondary)' }}>👤 Guests</span>
+            </div>
+            
+            <button style={{
+              width: '44px', height: '44px', borderRadius: '50%', background: 'var(--color-primary)', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer'
+            }} onClick={() => navigate(searchLocation ? `/listings?location=${searchLocation}` : '/listings')}>
               <Search size={20} />
             </button>
           </motion.div>
@@ -361,12 +378,12 @@ export default function LandingPage() {
             maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
           }}>
             {[
-              { name: 'City Escapes', gradient: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)' },
-              { name: 'Mountain Retreats', gradient: 'linear-gradient(135deg, #43a047 0%, #1b5e20 100%)' },
-              { name: 'Beach Stays', gradient: 'linear-gradient(135deg, #00A699 0%, #007A70 100%)' },
-              { name: 'Countryside Hideaways', gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' },
-              { name: 'Heritage Homes', gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' },
-              { name: 'Budget Picks', gradient: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)' }
+              { name: 'City Escapes', gradient: 'url("https://images.unsplash.com/photo-1496568816309-51d7c20e3b21?auto=format&fit=crop&w=400&q=80") center/cover' },
+              { name: 'Mountain Retreats', gradient: 'url("https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=400&q=80") center/cover' },
+              { name: 'Beach Stays', gradient: 'url("https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=400&q=80") center/cover' },
+              { name: 'Countryside Hideaways', gradient: 'url("https://images.unsplash.com/photo-1449844908441-8829872d2607?auto=format&fit=crop&w=400&q=80") center/cover' },
+              { name: 'Heritage Homes', gradient: 'url("https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?auto=format&fit=crop&w=400&q=80") center/cover' },
+              { name: 'Budget Picks', gradient: 'url("https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=400&q=80") center/cover' }
             ].map(cat => (
               <TiltCard key={cat.name} bgGradient={cat.gradient}>
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.6))' }} />
